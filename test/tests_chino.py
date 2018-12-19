@@ -815,7 +815,7 @@ class SearchUsersChinoTest(BaseChinoTest):
             self.chino.users.delete(user._id, force=True)
         self.chino.user_schemas.delete(self.schema, True)
 
-    def test_search_docs(self):
+    def test_search_users(self):
         for i in range(9):
             self.chino.users.create(self.schema, username="user_test_%s" % i, password='1234567890AAaa',
                                     attributes=dict(fieldInt=123, fieldString='test', fieldBool=False,
@@ -827,7 +827,7 @@ class SearchUsersChinoTest(BaseChinoTest):
                                                            fieldDateTime='2015-02-19T16:39:47'))
 
         # self.chino.searches.search(self.schema) # TODO: improve tests
-        time.sleep(5)  # wait the index max update time
+        time.sleep(10)  # wait twice the index max update time
         res = self.chino.searches.users(self.schema, filters=[{"field": "fieldInt", "type": "eq", "value": 123}])
         self.assertEqual(res.paging.total_count, 10, res)
         res = self.chino.searches.users(self.schema,
@@ -839,7 +839,10 @@ class SearchUsersChinoTest(BaseChinoTest):
         res = self.chino.searches.users(self.schema, filters=[{"field": "fieldInt", "type": "eq", "value": 123}])
         self.assertEqual(res.paging.total_count, 9, res)
 
-    def test_search_docs_consistent(self):
+        res = self.chino.searches.users_complex(self.schema, query={"field": "fieldInt", "type": "eq", "value": 123})
+        self.assertEqual(res.paging.total_count, 9, res)
+
+    def test_search_users_consistent(self):
         doc = None
         for i in range(4):
             doc = self.chino.users.create(self.schema, username="user_test_%s" % i, password='1234567890AAaa',

@@ -682,6 +682,22 @@ class ChinoAPISearches(ChinoAPIBase):
         else:
             return ListResult(User, self.apicall('POST', url, data=data, params=kwargs))
 
+    def users_complex(self, user_schema_id, query, result_type="FULL_CONTENT", sort=None,
+                  **kwargs):
+        url = 'search/users/%s' % user_schema_id
+        if not sort:
+            sort = []
+        data = dict(result_type=result_type,
+                    query=query)
+        if sort:
+            data['sort'] = sort
+        if result_type == "COUNT":
+            return self.apicall('POST', url, data=data, params=kwargs)['count']
+        elif result_type == "ONLY_ID":
+            return ListResult(IDs, self.apicall('POST', url, data=data, params=kwargs))
+        else:
+            return ListResult(User, self.apicall('POST', url, data=data, params=kwargs))
+
 
 class ChinoAuth(object):
     customer_id = None
