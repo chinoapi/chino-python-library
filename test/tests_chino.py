@@ -821,6 +821,8 @@ class SearchUsersChinoTest(BaseChinoTest):
                                     attributes=dict(fieldInt=123, fieldString='test', fieldBool=False,
                                                     fieldDate='2015-02-19',
                                                     fieldDateTime='2015-02-19T16:39:47'))
+            time.sleep(3)
+
         last_doc = self.chino.users.create(self.schema, username="user_test_last", password='1234567890AAaa',
                                            attributes=dict(fieldInt=123, fieldString='test', fieldBool=False,
                                                            fieldDate='2015-02-19',
