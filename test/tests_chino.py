@@ -733,30 +733,39 @@ class SearchDocsChinoTest(BaseChinoTest):
         self.chino.documents.create(self.schema, content=dict(fieldInt=123, fieldString='test', fieldBool=False,
                                                               fieldDate='2015-02-19',
                                                               fieldDateTime='2015-02-19T16:39:47'))
+        time.sleep(3)
         self.chino.documents.create(self.schema, content=dict(fieldInt=123, fieldString='test', fieldBool=False,
                                                               fieldDate='2015-02-19',
                                                               fieldDateTime='2015-02-19T16:39:47'))
+        time.sleep(3)
         self.chino.documents.create(self.schema, content=dict(fieldInt=123, fieldString='test', fieldBool=False,
                                                               fieldDate='2015-02-19',
                                                               fieldDateTime='2015-02-19T16:39:47'))
+        time.sleep(3)
         self.chino.documents.create(self.schema, content=dict(fieldInt=123, fieldString='test', fieldBool=False,
                                                               fieldDate='2015-02-19',
                                                               fieldDateTime='2015-02-19T16:39:47'))
+        time.sleep(3)
         self.chino.documents.create(self.schema, content=dict(fieldInt=123, fieldString='test', fieldBool=False,
                                                               fieldDate='2015-02-19',
                                                               fieldDateTime='2015-02-19T16:39:47'))
+        time.sleep(3)
         self.chino.documents.create(self.schema, content=dict(fieldInt=123, fieldString='test', fieldBool=False,
                                                               fieldDate='2015-02-19',
                                                               fieldDateTime='2015-02-19T16:39:47'))
+        time.sleep(3)
         self.chino.documents.create(self.schema, content=dict(fieldInt=123, fieldString='test', fieldBool=False,
                                                               fieldDate='2015-02-19',
                                                               fieldDateTime='2015-02-19T16:39:47'))
+        time.sleep(3)
         self.chino.documents.create(self.schema, content=dict(fieldInt=123, fieldString='test', fieldBool=False,
                                                               fieldDate='2015-02-19',
                                                               fieldDateTime='2015-02-19T16:39:47'))
+        time.sleep(3)
         self.chino.documents.create(self.schema, content=dict(fieldInt=123, fieldString='test', fieldBool=False,
                                                               fieldDate='2015-02-19',
                                                               fieldDateTime='2015-02-19T16:39:47'))
+        time.sleep(3)
         last_doc = self.chino.documents.create(self.schema,
                                                content=dict(fieldInt=123, fieldString='test', fieldBool=False,
                                                             fieldDate='2015-02-19',
@@ -797,6 +806,65 @@ class SearchDocsChinoTest(BaseChinoTest):
         res = self.chino.searches.documents(self.schema,
                                             filters=[{"field": "fieldInt", "type": "eq", "value": max - 1}])
         self.assertEqual(res.paging.total_count, 0, res)
+
+    def test_search_docs_complex(self):
+        doc = None
+        max = 4
+        for i in range(max):
+            doc_content = dict(fieldInt=i, fieldString='test', fieldBool=False,
+                             fieldDate='2018-12-19',fieldDateTime='2018-12-19T16:39:47')
+            doc = self.chino.documents.create(
+                self.schema,
+                content=doc_content,
+                consistent=True
+            )
+            res = self.chino.searches.documents_complex(self.schema, result_type="ONLY_ID",
+                        query={
+                            "and": [{"field": key, "type": "eq", "value": doc_content[key]} for key in doc_content.keys()]
+                                   + [
+                                       {"field": "_id", "type": "eq", "value": doc.document_id}
+                                   ]
+                        }
+                    )
+            print(res)
+            self.assertEquals(
+                doc.document_id, str(res.IDs[0])
+            )
+
+        self.assertEquals(
+            0,
+            len(
+                self.chino.searches.documents_complex(self.schema, result_type="NO_CONTENT",
+                    query={
+                        "or": [
+                            {"field": "fieldInt", "type": "eq", "value": max + 1},
+                            {"not": [
+                                {"field": "fieldInt", "type": "lte", "value": max}
+                            ]}
+                        ]
+                    }
+                ).documents
+            )
+        )
+
+        count_docs = self.chino.searches.documents_complex(self.schema, result_type="COUNT",
+            query={"field": "fieldDate", "type": "gte", "value": '2018-12-19'}
+        )
+        self.assertEqual(max, count_docs)
+
+        all_ids = self.chino.searches.documents_complex(self.schema, result_type="ONLY_ID",
+            query={"field": "fieldDate", "type": "gte", "value": '2018-12-19'}
+        )
+        self.assertIn(doc.document_id, [str(_id['id']) for _id in all_ids.to_dict()["IDs"]])
+
+        self.assertEquals(
+            doc.document_id,    # last created document
+            self.chino.searches.documents_complex(self.schema,
+                sort=[dict(field="fieldInt", order="desc")],
+                query={"field": "fieldDate", "type": "gte", "value": '2018-12-19'},
+                limit=1
+            ).documents[0].document_id
+        )
 
 
 class SearchUsersChinoTest(BaseChinoTest):
@@ -857,6 +925,61 @@ class SearchUsersChinoTest(BaseChinoTest):
             # self.chino.users.delete(doc.user_id, force=True,consistent=True)
             # res = self.chino.searches.users(self.schema, filters=[{"field": "fieldInt", "type": "eq", "value": 123}])
             # self.assertEqual(res.paging.total_count, 9, res)
+
+    def test_search_users_complex(self):
+        usr = None
+        max = 4
+        for i in range(max):
+            usr_attributes = dict(fieldInt=i, fieldString='test', fieldBool=False,
+                               fieldDate='2018-12-19', fieldDateTime='2018-12-19T16:39:47')
+            usr = self.chino.users.create(self.schema, username="user_test_%s" % i, password='1234567890AAaa',
+                                          attributes=usr_attributes,
+                                          consistent=True
+            )
+            self.assertTrue(
+                self.chino.searches.users_complex(self.schema, result_type="EXISTS",
+                    query={
+                        "and": [{"field": key, "type": "eq", "value": usr_attributes[key]}
+                                for key in usr_attributes.keys()]
+                               + [
+                                   {"field": "_id", "type": "eq",
+                                    "value": usr.user_id}
+                               ]
+                    }
+                )
+            )
+            self.assertTrue(
+                self.chino.searches.users_complex(self.schema, result_type="USERNAME_EXISTS",
+                    query={"field": "username", "type": "eq", "value": usr.username}
+                )
+            )
+
+        self.assertFalse(
+            self.chino.searches.users_complex(self.schema, result_type="EXISTS",
+                query={
+                    "or": [
+                        {"field": "fieldInt", "type": "eq", "value": max + 1},
+                        {"not": [
+                            {"field": "fieldInt", "type": "lte", "value": max}
+                        ]}
+                    ]
+                }
+            )
+        )
+
+        count_docs = self.chino.searches.users_complex(self.schema, result_type="COUNT",
+            query={"field": "fieldDate", "type": "gte", "value": '2018-12-19'}
+        )
+        self.assertEqual(max, count_docs)
+
+        self.assertEquals(
+            usr.user_id,    # last created user
+            self.chino.searches.users_complex(self.schema,
+                sort=[dict(field="fieldInt", order="desc")],
+                query={"field": "fieldDate", "type": "gte", "value": '2018-12-19'},
+                limit=1
+            ).users[0].user_id
+        )
 
 
 class PermissionChinoTest(BaseChinoTest):

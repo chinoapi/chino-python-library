@@ -644,6 +644,8 @@ class ChinoAPISearches(ChinoAPIBase):
             data['sort'] = sort
         if result_type == "COUNT":
             return self.apicall('POST', url, data=data, params=kwargs)['count']
+        elif result_type == "EXISTS":
+            return bool(self.apicall('POST', url, data=data, params=kwargs)['exists'])
         elif result_type == "ONLY_ID":
             return ListResult(IDs, self.apicall('POST', url, data=data, params=kwargs))
         else:
@@ -660,6 +662,8 @@ class ChinoAPISearches(ChinoAPIBase):
             data['sort'] = sort
         if result_type == "COUNT":
             return self.apicall('POST', url, data=data, params=kwargs)['count']
+        elif result_type == "EXISTS":
+            return bool(self.apicall('POST', url, data=data, params=kwargs)['exists'])
         elif result_type == "ONLY_ID":
             return ListResult(IDs, self.apicall('POST', url, data=data, params=kwargs))
         else:
@@ -693,8 +697,8 @@ class ChinoAPISearches(ChinoAPIBase):
             data['sort'] = sort
         if result_type == "COUNT":
             return self.apicall('POST', url, data=data, params=kwargs)['count']
-        elif result_type == "ONLY_ID":
-            return ListResult(IDs, self.apicall('POST', url, data=data, params=kwargs))
+        elif result_type == "EXISTS" or result_type == "USERNAME_EXISTS":
+            return self.apicall('POST', url, data=data, params=kwargs)['exists']
         else:
             return ListResult(User, self.apicall('POST', url, data=data, params=kwargs))
 
